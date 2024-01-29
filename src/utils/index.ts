@@ -7,35 +7,22 @@ import {
     ITableMeta
 } from '@lark-base-open/js-sdk'
 
-//TODO: 目前没有调检查函数，晚点加上
-export async function init(selectedTable: string, setModalIsShow: React.Dispatch<React.SetStateAction<boolean>>) {
-    let flag = false
+export async function checkBillTableIsValid(selectedTable: string) {
+    let flag = true
     await bitable.base.getTable(selectedTable).catch(() => {
-        // newTable()
-
-        setModalIsShow(true)
-        flag = true
+        flag = false
     })
-    await bitable.base
-        .getTable('资金流向结果')
-        .then(() => {
-            setModalIsShow(true)
-            flag = true
-        })
-        .catch(() => {
-            return
-        })
-    if (flag) return
+    if (!flag) return false
 
-    const table = await bitable.base.getTable('账单')
+    const table = await bitable.base.getTable(selectedTable)
     const fieldMetaList = await table.getFieldMetaList()
 
     const requiredNames = {
-        消费事项: 1,
-        出资人: 3,
-        金额: 2,
-        使用者: 4,
-        支付日期: 5
+        消费事项: FieldType.Text,
+        出资人: FieldType.SingleSelect,
+        金额: FieldType.Number,
+        使用者: FieldType.MultiSelect,
+        支付日期: FieldType.DateTime
     }
 
     const nameCount = {
@@ -62,7 +49,6 @@ export async function init(selectedTable: string, setModalIsShow: React.Dispatch
     for (const name in nameCount) {
         // @ts-expect-error 类型以后处理，先出活
         if (nameCount[name] === 0) {
-            setModalIsShow(true)
             return false
         }
     }
@@ -70,7 +56,7 @@ export async function init(selectedTable: string, setModalIsShow: React.Dispatch
     return true
 }
 
-export async function newTable(newTableName: string) {
+export async function newBillTable(newTableName: string) {
     const { tableId } = await bitable.base.addTable({
         name: newTableName,
         fields: []
@@ -84,10 +70,28 @@ export async function newTable(newTableName: string) {
     const col3Name = '金额'
     const col4Name = '使用者'
     const col5Name = '支付日期'
-    const example =[
-        {titleField: "吃早餐！", payerField: "Ann",  amountField:66, userField: ["Ann", "Jim", "Tom"], dateField: new Date()},
-        {titleField: "吃午餐！", payerField: "Jim",  amountField:77, userField: ["Ann", "Jim", "Tom"], dateField: new Date()},
-        {titleField: "吃晚餐！", payerField: "Tom",  amountField:88, userField: ["Ann", "Jim", "Tom"], dateField: new Date()},
+    const example = [
+        {
+            titleField: '吃早餐！',
+            payerField: 'Ann',
+            amountField: 66,
+            userField: ['Ann', 'Jim', 'Tom'],
+            dateField: Date.now()
+        },
+        {
+            titleField: '吃午餐！',
+            payerField: 'Jim',
+            amountField: 77,
+            userField: ['Ann', 'Jim', 'Tom'],
+            dateField: Date.now()
+        },
+        {
+            titleField: '吃晚餐！',
+            payerField: 'Tom',
+            amountField: 88,
+            userField: ['Ann', 'Jim', 'Tom'],
+            dateField: Date.now()
+        }
     ]
 
     await table.setField(field.id, {
@@ -105,17 +109,15 @@ export async function newTable(newTableName: string) {
     const field4 = await table.getField(col4Name)
     const field5 = await table.getField(col5Name)
 
-    for (){
+    for (const item of example) {
+        const cell1 = await field1.createCell(item.titleField)
+        const cell2 = await field2.createCell(item.payerField)
+        const cell3 = await field3.createCell(item.amountField)
+        const cell4 = await field4.createCell(item.userField)
+        const cell5 = await field5.createCell(item.dateField)
 
+        await table.addRecords([cell1, cell2, cell3, cell4, cell5])
     }
-
-    const cell1 = await field1.createCell(name1)
-    const cell2 = await field2.createCell('应付')
-    const cell3 = await field3.createCell(name2)
-    const cell4 = await field4.createCell(money)
-    const cell5 = await field5.createCell('元')
-
-    await table.addRecords([cell1, cell2, cell3, cell4, cell5])
 }
 
 async function getBill(targetTableName: string) {
@@ -213,9 +215,9 @@ async function getBill(targetTableName: string) {
     return payments
 }
 
-export async function write2NewTable(sourceTableName: string) {
+export async function outputResult(sourceTableName: string, newTableName: string) {
     const { tableId } = await bitable.base.addTable({
-        name: '资金流向结果',
+        name: newTableName,
         fields: []
     })
 
