@@ -277,6 +277,7 @@ function App() {
                     value={selectedTable}
                     //@ts-expect-error 明明有这个属性，但是不知道抽什么风静态报错
                     onChange={setSelectedTable}
+                    placeholder={'请点击选择数据表'}
                     onFocus={() => {
                         getTableList(setTableList)
                     }}
