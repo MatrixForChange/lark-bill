@@ -1,89 +1,80 @@
-import React, { useState } from 'react'
-import { bitable, IOpenSingleSelect, IOpenMultiSelect, FieldType, IAttachmentField } from '@lark-base-open/js-sdk'
-import { Modal } from '@douyinfe/semi-ui'
+import { useState } from 'react'
+import {
+    bitable,
+    IOpenSingleSelect,
+    IOpenMultiSelect,
+    FieldType,
+    IAttachmentField,
+    ITableMeta
+} from '@lark-base-open/js-sdk'
+import { Button, Modal, Select, Input } from '@douyinfe/semi-ui'
 import './App.css'
 
-async function init(
-    setModalIsShow: React.Dispatch<React.SetStateAction<boolean>>,
-    setMsg: React.Dispatch<React.SetStateAction<string[]>>
-) {
-    let flag = false
-    await bitable.base.getTable('账单').catch(() => {
-        newTable()
-        setMsg([
-            '当前多维表格不存在名为“账单”的表格，已自动创建成功。请切换到“账单”表格以记录您的消费事项。',
-            '所有消费事项记录完毕后，再次点击首页的“START”按钮进行计算。'
-        ])
-        setModalIsShow(true)
-        flag = true
-    })
-    await bitable.base
-        .getTable('资金流向结果')
-        .then(() => {
-            setMsg([
-                '当前多维表格已存在名为“资金流向结果”的表格，本插件需要将每次计算的结果存放到该表格中。',
-                '我们非常重视您的数据，请将已存在的“资金流向结果”表重命名以归档，或者删除此表格后，再次点击首页的“START”按钮进行计算。'
-            ])
-            setModalIsShow(true)
-            flag = true
-        })
-        .catch(() => {
-            return
-        })
-    if (flag) return
+// async function init(selectedTable: string, setModalIsShow: React.Dispatch<React.SetStateAction<boolean>>) {
+//     let flag = false
+//     await bitable.base.getTable(selectedTable).catch(() => {
+//         // newTable()
 
-    const table = await bitable.base.getTable('账单')
-    const fieldMetaList = await table.getFieldMetaList()
+//         setModalIsShow(true)
+//         flag = true
+//     })
+//     await bitable.base
+//         .getTable('资金流向结果')
+//         .then(() => {
+//             setModalIsShow(true)
+//             flag = true
+//         })
+//         .catch(() => {
+//             return
+//         })
+//     if (flag) return
 
-    // const test = table.getFieldIdList()
+//     const table = await bitable.base.getTable('账单')
+//     const fieldMetaList = await table.getFieldMetaList()
 
-    const requiredNames = {
-        消费事项: 1,
-        出资人: 3,
-        金额: 2,
-        使用者: 4,
-        支付日期: 5
-    }
+//     const requiredNames = {
+//         消费事项: 1,
+//         出资人: 3,
+//         金额: 2,
+//         使用者: 4,
+//         支付日期: 5
+//     }
 
-    const nameCount = {
-        消费事项: 0,
-        出资人: 0,
-        金额: 0,
-        使用者: 0,
-        支付日期: 0
-    }
+//     const nameCount = {
+//         消费事项: 0,
+//         出资人: 0,
+//         金额: 0,
+//         使用者: 0,
+//         支付日期: 0
+//     }
 
-    for (const item of fieldMetaList) {
-        const name = item.name
-        const type = item.type
+//     for (const item of fieldMetaList) {
+//         const name = item.name
+//         const type = item.type
 
-        // 检查name是否在所需列表中，且type是否匹配
-        // @ts-expect-error 类型以后处理，先出活
-        if (requiredNames[name] !== undefined && requiredNames[name] === type) {
-            // @ts-expect-error 类型以后处理，先出活
-            nameCount[name]++
-        }
-    }
+//         // 检查name是否在所需列表中，且type是否匹配
+//         // @ts-expect-error 类型以后处理，先出活
+//         if (requiredNames[name] !== undefined && requiredNames[name] === type) {
+//             // @ts-expect-error 类型以后处理，先出活
+//             nameCount[name]++
+//         }
+//     }
 
-    // 确保所有name都至少出现一次
-    for (const name in nameCount) {
-        // @ts-expect-error 类型以后处理，先出活
-        if (nameCount[name] === 0) {
-            setMsg([
-                '当前多维表格已存在名为“账单”的表格，但字段名、字段属性不符合要求。本插件需要往具有特定字段名、字段属性的同名表格读取数据。',
-                '我们非常重视您的数据，请新建一个多维表格再使用本插件，或者重命名冲突表格。'
-            ])
-            setModalIsShow(true)
-            return false
-        }
-    }
+//     // 确保所有name都至少出现一次
+//     for (const name in nameCount) {
+//         // @ts-expect-error 类型以后处理，先出活
+//         if (nameCount[name] === 0) {
+//             setModalIsShow(true)
+//             return false
+//         }
+//     }
 
-    return true
-}
+//     return true
+// }
 
-async function newTable() {
+async function newTable(newTableName: string) {
     const { tableId } = await bitable.base.addTable({
-        name: '账单',
+        name: newTableName,
         fields: []
     })
 
@@ -106,8 +97,8 @@ async function newTable() {
     await table.addField({ type: FieldType.DateTime, name: col5Name })
 }
 
-async function getBill() {
-    const table = await bitable.base.getTable('账单')
+async function getBill(targetTableName: string) {
+    const table = await bitable.base.getTable(targetTableName)
     const recordIdList = await table.getRecordList()
     const fields = await table.getFieldMetaList()
     let payerField = ''
@@ -201,15 +192,7 @@ async function getBill() {
     return payments
 }
 
-async function write2NewTable(
-    setModalIsShow: React.Dispatch<React.SetStateAction<boolean>>,
-    setMsg: React.Dispatch<React.SetStateAction<string[]>>
-) {
-    const flag = await init(setModalIsShow, setMsg)
-    if (!flag) {
-        return
-    }
-
+async function write2NewTable(sourceTableName: string) {
     const { tableId } = await bitable.base.addTable({
         name: '资金流向结果',
         fields: []
@@ -238,7 +221,7 @@ async function write2NewTable(
     const field4 = await table.getField(col4Name)
     const field5 = await table.getField(col5Name)
 
-    const payment = await getBill()
+    const payment = await getBill(sourceTableName)
 
     for (const name1 of Object.keys(payment)) {
         //@ts-expect-error 获取payment的算法是js写的，用到ts里还没理清数据结构
@@ -256,31 +239,71 @@ async function write2NewTable(
     }
 }
 
+async function getTableList(setTableList: React.Dispatch<React.SetStateAction<ITableMeta[]>>) {
+    const tableList = await bitable.base.getTableMetaList()
+    setTableList(tableList)
+}
+
 function App() {
     const [modalIsShow, setModalIsShow] = useState(false)
-    const [msg, setMsg] = useState<string[]>([])
+    const [tableList, setTableList] = useState<ITableMeta[]>([])
+    const [selectedTable, setSelectedTable] = useState('')
+    const [newTableName, setNewTableName] = useState('')
 
     return (
         <>
-            <div className='top'>
-                <p>bill——简易AA账单计算器</p>
-                <p>点击“START”按钮以生成AA账单</p>
-            </div>
+            <div className='container'>
+                <p>1:初次使用请新建账单模版，以自动生成本插件需要的特定字段的表格：</p>
+                {/* @ts-expect-error 是可以的，但是不知道抽什么风静态编译报错 */}
+                <Button
+                    onClick={() => {
+                        setNewTableName(
+                            `账单模版_${(() => {
+                                const date = new Date()
+                                return `${date.getFullYear()}${
+                                    date.getMonth() + 1
+                                }${date.getDate()}${date.getHours()}${date.getMinutes()}${date.getSeconds()}`
+                            })()}`
+                        )
+                        setModalIsShow(true)
+                    }}
+                    theme='solid'
+                    type='primary'
+                >
+                    新建账单模版
+                </Button>
 
-            <div
-                className='btn'
-                onClick={() => {
-                    write2NewTable(setModalIsShow, setMsg)
-                }}
-            >
-                START
+                <p>2:请选择账单所在表：</p>
+                <Select
+                    value={selectedTable}
+                    onChange={setSelectedTable}
+                    onFocus={() => {
+                        getTableList(setTableList)
+                    }}
+                >
+                    {tableList.map(item => (
+                        <Select.Option value={item.id}>{item.name}</Select.Option>
+                    ))}
+                </Select>
+
+                {/* @ts-expect-error 是可以的，但是不知道抽什么风静态编译报错 */}
+                <Button
+                    onClick={() => {
+                        write2NewTable(selectedTable)
+                    }}
+                    theme='solid'
+                    type='primary'
+                    style={{ marginLeft: 8 }}
+                >
+                    开始计算
+                </Button>
             </div>
 
             <Modal
-                title='温馨提示：'
+                title='新建账单模版：'
                 visible={modalIsShow}
-                hasCancel={false}
                 onOk={() => {
+                    newTable(newTableName)
                     setModalIsShow(false)
                 }}
                 onCancel={() => {
@@ -288,8 +311,7 @@ function App() {
                 }}
                 closeOnEsc={true}
             >
-                <p>{msg[0]}</p>
-                <p>{msg[1]}</p>
+                <Input value={newTableName} onChange={setNewTableName}></Input>
             </Modal>
         </>
     )
