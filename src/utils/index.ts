@@ -7,67 +7,68 @@ import {
     ITableMeta
 } from '@lark-base-open/js-sdk'
 
-//export async function init(selectedTable: string, setModalIsShow: React.Dispatch<React.SetStateAction<boolean>>) {
-//     let flag = false
-//     await bitable.base.getTable(selectedTable).catch(() => {
-//         // newTable()
+//TODO: 目前没有调检查函数，晚点加上
+export async function init(selectedTable: string, setModalIsShow: React.Dispatch<React.SetStateAction<boolean>>) {
+    let flag = false
+    await bitable.base.getTable(selectedTable).catch(() => {
+        // newTable()
 
-//         setModalIsShow(true)
-//         flag = true
-//     })
-//     await bitable.base
-//         .getTable('资金流向结果')
-//         .then(() => {
-//             setModalIsShow(true)
-//             flag = true
-//         })
-//         .catch(() => {
-//             return
-//         })
-//     if (flag) return
+        setModalIsShow(true)
+        flag = true
+    })
+    await bitable.base
+        .getTable('资金流向结果')
+        .then(() => {
+            setModalIsShow(true)
+            flag = true
+        })
+        .catch(() => {
+            return
+        })
+    if (flag) return
 
-//     const table = await bitable.base.getTable('账单')
-//     const fieldMetaList = await table.getFieldMetaList()
+    const table = await bitable.base.getTable('账单')
+    const fieldMetaList = await table.getFieldMetaList()
 
-//     const requiredNames = {
-//         消费事项: 1,
-//         出资人: 3,
-//         金额: 2,
-//         使用者: 4,
-//         支付日期: 5
-//     }
+    const requiredNames = {
+        消费事项: 1,
+        出资人: 3,
+        金额: 2,
+        使用者: 4,
+        支付日期: 5
+    }
 
-//     const nameCount = {
-//         消费事项: 0,
-//         出资人: 0,
-//         金额: 0,
-//         使用者: 0,
-//         支付日期: 0
-//     }
+    const nameCount = {
+        消费事项: 0,
+        出资人: 0,
+        金额: 0,
+        使用者: 0,
+        支付日期: 0
+    }
 
-//     for (const item of fieldMetaList) {
-//         const name = item.name
-//         const type = item.type
+    for (const item of fieldMetaList) {
+        const name = item.name
+        const type = item.type
 
-//         // 检查name是否在所需列表中，且type是否匹配
-//         // @ts-expect-error 类型以后处理，先出活
-//         if (requiredNames[name] !== undefined && requiredNames[name] === type) {
-//             // @ts-expect-error 类型以后处理，先出活
-//             nameCount[name]++
-//         }
-//     }
+        // 检查name是否在所需列表中，且type是否匹配
+        // @ts-expect-error 类型以后处理，先出活
+        if (requiredNames[name] !== undefined && requiredNames[name] === type) {
+            // @ts-expect-error 类型以后处理，先出活
+            nameCount[name]++
+        }
+    }
 
-//     // 确保所有name都至少出现一次
-//     for (const name in nameCount) {
-//         // @ts-expect-error 类型以后处理，先出活
-//         if (nameCount[name] === 0) {
-//             setModalIsShow(true)
-//             return false
-//         }
-//     }
+    // 确保所有name都至少出现一次
+    for (const name in nameCount) {
+        // @ts-expect-error 类型以后处理，先出活
+        if (nameCount[name] === 0) {
+            setModalIsShow(true)
+            return false
+        }
+    }
 
-//     return true
-// }
+    return true
+}
 
 export async function newTable(newTableName: string) {
     const { tableId } = await bitable.base.addTable({
@@ -83,6 +84,11 @@ export async function newTable(newTableName: string) {
     const col3Name = '金额'
     const col4Name = '使用者'
     const col5Name = '支付日期'
+    const example =[
+        {titleField: "吃早餐！", payerField: "Ann",  amountField:66, userField: ["Ann", "Jim", "Tom"], dateField: new Date()},
+        {titleField: "吃午餐！", payerField: "Jim",  amountField:77, userField: ["Ann", "Jim", "Tom"], dateField: new Date()},
+        {titleField: "吃晚餐！", payerField: "Tom",  amountField:88, userField: ["Ann", "Jim", "Tom"], dateField: new Date()},
+    ]
 
     await table.setField(field.id, {
         name: col1Name
@@ -92,6 +98,24 @@ export async function newTable(newTableName: string) {
     await table.addField({ type: FieldType.Number, name: col3Name })
     await table.addField({ type: FieldType.MultiSelect, name: col4Name })
     await table.addField({ type: FieldType.DateTime, name: col5Name })
+
+    const field1 = await table.getField(col1Name)
+    const field2 = await table.getField(col2Name)
+    const field3 = await table.getField(col3Name)
+    const field4 = await table.getField(col4Name)
+    const field5 = await table.getField(col5Name)
+
+    for (){
+
+    }
+
+    const cell1 = await field1.createCell(name1)
+    const cell2 = await field2.createCell('应付')
+    const cell3 = await field3.createCell(name2)
+    const cell4 = await field4.createCell(money)
+    const cell5 = await field5.createCell('元')
+
+    await table.addRecords([cell1, cell2, cell3, cell4, cell5])
 }
 
 async function getBill(targetTableName: string) {
