@@ -254,7 +254,6 @@ function App() {
         <>
             <div className='container'>
                 <p>1:初次使用请新建账单模版，以自动生成本插件需要的特定字段的表格：</p>
-                {/* @ts-expect-error 是可以的，但是不知道抽什么风静态编译报错 */}
                 <Button
                     onClick={() => {
                         setNewTableName(
@@ -276,6 +275,7 @@ function App() {
                 <p>2:请选择账单所在表：</p>
                 <Select
                     value={selectedTable}
+                    //@ts-expect-error 明明有这个属性，但是不知道抽什么风静态报错
                     onChange={setSelectedTable}
                     onFocus={() => {
                         getTableList(setTableList)
@@ -286,7 +286,6 @@ function App() {
                     ))}
                 </Select>
 
-                {/* @ts-expect-error 是可以的，但是不知道抽什么风静态编译报错 */}
                 <Button
                     onClick={() => {
                         write2NewTable(selectedTable)
